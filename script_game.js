@@ -209,7 +209,7 @@ function afficherLiaison(depart, arrivee, distanceKm, points) {
 
 function calculerPoints(distanceKm) {
   const distanceNormalisee = Math.min(distanceKm / DISTANCE_MAXIMUM_KM, 1);
-  return Math.round(SCORE_MAXIMUM * (1 - distanceNormalisee) ** 2);
+  return Math.round(SCORE_MAXIMUM * (1 - distanceNormalisee));
 }
 
 function afficherResultat(distanceKm, points, lieu) {
