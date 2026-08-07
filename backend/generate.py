@@ -90,7 +90,7 @@ def _ligne_archive(jour: date) -> str:
     iso = jour.isoformat()
     return f"""
           <li class="game">
-            <a class="game-link" href="daily.html" aria-label="Rejouer la partie du {_nommer_date(jour)}">
+            <a class="game-link" href="daily.html?date={iso}" aria-label="Rejouer la partie du {_nommer_date(jour)}">
               <span class="game-date">{_nommer_date(jour)}</span>
               <span class="game-right">
                 <span class="game-badge" data-date="{iso}">À jouer</span>
@@ -111,6 +111,7 @@ def generer_archives(parties: list[dict]) -> None:
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Les anciennes parties - ICI ou là</title>
+  <link rel="icon" href="favicon.ico">
   <link rel="stylesheet" href="style.css">
 </head>
 

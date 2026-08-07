@@ -85,10 +85,21 @@ function creerArticle(ligne, numero) {
 }
 
 async function demarrerPartie() {
-  partieActuelle = transformerLigne(parties[0]);
+  partieActuelle = transformerLigne(choisirPartie());
   articleActuel = 0;
   score = 0;
   await afficherArticle();
+}
+
+function choisirPartie() {
+  const dateDemandee = new URLSearchParams(window.location.search).get("date");
+  if (dateDemandee) {
+    const [annee, mois, jour] = dateDemandee.split("-").map(Number);
+    const cle = `${jour}/${mois}/${annee}`;
+    const ligne = parties.find(ligne => ligne.Date === cle);
+    if (ligne) return ligne;
+  }
+  return parties[0];
 }
 
 async function afficherArticle() {

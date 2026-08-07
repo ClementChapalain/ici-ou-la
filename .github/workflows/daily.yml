@@ -45,7 +45,7 @@ jobs:
       - name: Préparer le dossier du site
         run: |
           mkdir -p _site
-          cp daily.html archives.html script_game.js style.css articles.csv _site/
+          cp daily.html archives.html script_game.js style.css articles.csv favicon.ico _site/
           cp index.html _site/
 
       - name: Configurer GitHub Pages
