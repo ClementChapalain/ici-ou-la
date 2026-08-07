@@ -271,7 +271,7 @@ function finPartie() {
 
 function marquerPartieJouee() {
   const [jour, mois, annee] = partieActuelle.date.split("/");
-  const iso = `${annee}-${mois}-${jour}`;
+  const iso = `${annee}-${String(mois).padStart(2, "0")}-${String(jour).padStart(2, "0")}`;
   const CLEF_PARTIES_JOUÉES = "icioulà-parties-jouées";
   try {
     const jouees = JSON.parse(localStorage.getItem(CLEF_PARTIES_JOUÉES) || "[]");
