@@ -86,6 +86,7 @@ function creerArticle(ligne, numero) {
 
 async function demarrerPartie() {
   partieActuelle = transformerLigne(choisirPartie());
+  marquerPartieJouee();
   articleActuel = 0;
   score = 0;
   await afficherArticle();
