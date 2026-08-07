@@ -9,10 +9,13 @@ let ligneDistance;
 let etiquetteDistance;
 let reponseEnCours = false;
 let viseur;
+let nbIndices = 0;
 
 const SCORE_MAXIMUM = 5_000;
 const DISTANCE_MAXIMUM_KM = 600;
+const MALUS_PAR_INDICE = 0.2;
 const cacheLieux = new Map();
+const cacheIndices = new Map();
 
 initialiserCarte();
 
@@ -108,17 +111,22 @@ async function afficherArticle() {
   const feedback = document.querySelector("#feedback");
 
   reponseEnCours = false;
+  nbIndices = 0;
+  const boutonIndice = document.querySelector("#hint-button");
+  boutonIndice.disabled = false;
+  boutonIndice.textContent = "💡 Région (score −20 %)";
+  document.querySelector("#hint-display").textContent = "";
   document.querySelector("#map-container").classList.remove("map--ready");
   supprimerMarqueurs();
   document.querySelector(".article").textContent = article.titreTronque;
   document.querySelector(".article-link").textContent = "";
   document.querySelector("#numero").textContent = articleActuel + 1;
   document.querySelector("#next-button").style.display = "none";
-  feedback.textContent = "Positionnement du lieu sur la carte…";
+  feedback.textContent = "Cliquez sur la carte pour placer votre réponse.";
 
   try {
     article.position = await geolocaliser(article);
-    feedback.textContent = "Cliquez sur la carte pour placer votre réponse.";
+    obtenirInfosLieu(article).catch(() => {});
   } catch (erreur) {
     afficherErreur(`Le lieu « ${article.lieu} » n'a pas pu être localisé. Passez à la question suivante.`);
     afficherBoutonSuivant();
@@ -159,18 +167,20 @@ function jouer(positionJoueur) {
   if (reponseEnCours || !article.position) return;
 
   reponseEnCours = true;
+  document.querySelector("#hint-button").disabled = true;
   document.querySelector("#map-container").classList.add("map--ready");
   document.querySelector(".article").textContent = article.titreOriginal;
 
-  marqueurChoix = creerMarqueur(positionJoueur, "#001bcc", "Votre réponse");
+  marqueurChoix = creerMarqueur(positionJoueur, "#3255ff", "Votre réponse");
   marqueurReponse = creerMarqueur(article.position, "#2e9c5b", `Le lieu : ${article.lieu}`);
 
   const distanceKm = carte.distance(positionJoueur, article.position) / 1000;
-  const points = calculerPoints(distanceKm);
+  const multiplicateur = Math.max(1 - MALUS_PAR_INDICE * nbIndices, 0);
+  const points = Math.round(calculerPoints(distanceKm) * multiplicateur);
   score += points;
+  article.resultat = { points, indices: nbIndices, distanceKm };
 
   afficherLiaison(positionJoueur, article.position, distanceKm, points);
-  afficherResultat(distanceKm, points, article.lieu);
   document.querySelector(".article-link").innerHTML =
     `<a href="${article.lien}" target="_blank" rel="noreferrer">Lire l'article<span aria-hidden="true"> ↗</span></a>`;
   afficherBoutonSuivant();
@@ -188,7 +198,7 @@ function creerMarqueur(position, couleur, titre) {
 
 function afficherLiaison(depart, arrivee, distanceKm, points) {
   ligneDistance = L.polyline([depart, arrivee], {
-    color: "#001bcc",
+    color: "#3255ff",
     weight: 3,
     dashArray: "8 8",
     opacity: 0.8
@@ -213,12 +223,60 @@ function calculerPoints(distanceKm) {
   return Math.round(SCORE_MAXIMUM * (1 - distanceNormalisee));
 }
 
-function afficherResultat(distanceKm, points, lieu) {
-  const distance = Math.round(distanceKm).toLocaleString("fr-FR");
-  const scoreFormate = points.toLocaleString("fr-FR");
-  document.querySelector("#feedback").innerHTML =
-    `📍 <strong>${lieu}</strong> était à <strong>${distance} km</strong> de votre réponse.<br>` +
-    `Vous gagnez <strong>${scoreFormate} points</strong>.`;
+function initialiserIndices() {
+  document.querySelector("#hint-button").addEventListener("click", afficherIndice);
+}
+
+async function afficherIndice() {
+  const article = partieActuelle.articles[articleActuel];
+  if (reponseEnCours || !article.position) return;
+
+  const niveau = nbIndices;
+  let info;
+  try {
+    info = await obtenirInfosLieu(article);
+  } catch (erreur) {
+    document.querySelector("#hint-display").textContent = "Indice indisponible pour ce lieu.";
+    return;
+  }
+
+  const libelles = ["Région", "Département"];
+  const valeurs = [info.region, info.departement];
+  nbIndices += 1;
+
+  document.querySelector("#hint-display").textContent = `${libelles[niveau]} : ${valeurs[niveau]}`;
+  const bouton = document.querySelector("#hint-button");
+  if (nbIndices >= 2) {
+    bouton.textContent = "Indices épuisés";
+    bouton.disabled = true;
+  } else {
+    bouton.textContent = "💡 Département (−40 %)";
+  }
+}
+
+async function obtenirInfosLieu(article) {
+  if (cacheIndices.has(article.lieu)) return cacheIndices.get(article.lieu);
+
+  const url = new URL("https://nominatim.openstreetmap.org/reverse");
+  url.search = new URLSearchParams({
+    lat: article.position.lat,
+    lon: article.position.lng,
+    format: "jsonv2",
+    zoom: "10"
+  });
+
+  const reponse = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!reponse.ok) throw new Error("géocodage inverse indisponible");
+
+  const resultat = await reponse.json();
+  const adresse = resultat.address || {};
+  const info = {
+    region: adresse.state || "Région inconnue",
+    departement: adresse.county || adresse.state_district || "Département inconnu",
+    ville: adresse.city || adresse.town || adresse.village || adresse.hamlet || adresse.municipality || "Ville inconnue"
+  };
+  cacheIndices.set(article.lieu, info);
+  return info;
 }
 
 function afficherBoutonSuivant() {
@@ -259,6 +317,7 @@ function finPartie() {
   document.querySelector("#feedback").style.display = "none";
   document.querySelector("#next-button").style.display = "none";
   document.querySelector(".game-meta").style.display = "none";
+  document.querySelector(".hint-bar").style.display = "none";
   document.querySelector("#end-screen").style.display = "block";
   document.querySelector("#final-score").textContent = score.toLocaleString("fr-FR");
   document.querySelector("#share-button").onclick = ouvrirPartage;
@@ -296,11 +355,18 @@ function echapperHTML(texte) {
 function afficherRecap() {
   document.querySelector("#recap").innerHTML = partieActuelle.articles.map((article, index) => {
     const numero = String(index + 1).padStart(2, "0");
+    const resultat = article.resultat;
+    const distance = resultat ? `${Math.round(resultat.distanceKm).toLocaleString("fr-FR")} km` : "";
+    const scoreInfo = resultat && resultat.indices > 0
+      ? `${resultat.points.toLocaleString("fr-FR")} pts · ${resultat.indices} indice${resultat.indices > 1 ? "s" : ""} (−${resultat.indices * 20} %)`
+      : `${(resultat ? resultat.points : 0).toLocaleString("fr-FR")} pts`;
+    const details = [distance, scoreInfo].filter(Boolean).join(" · ");
     return `
       <li class="recap-item">
         <span class="recap-num">${numero}</span>
         <div class="recap-content">
           <p class="recap-title">${echapperHTML(article.titreOriginal)}</p>
+          <p class="recap-score">${details}</p>
         </div>
         <a class="recap-link" href="${article.lien}" target="_blank" rel="noreferrer">Lire l'article<span aria-hidden="true"> ↗</span></a>
       </li>`;
@@ -392,3 +458,4 @@ async function copierLien(url) {
 }
 
 preparerActionsPartage();
+initialiserIndices();

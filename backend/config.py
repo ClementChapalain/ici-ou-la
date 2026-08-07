@@ -16,6 +16,7 @@ load_dotenv(PROJECT_ROOT / ".env")
 CSV_PARTIES = PROJECT_ROOT / "articles.csv"
 ARCHIVES_HTML = PROJECT_ROOT / "archives.html"
 CACHE_GEOCODAGE = BACKEND_DIR / "geocode_cache.json"
+CACHE_ARCHIVES = BACKEND_DIR / "archives_cache"
 
 BASE_URL = "https://www.ici.fr"
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
@@ -27,6 +28,8 @@ MAX_ROWS_CSV = 31
 MAX_CANDIDATS = 300
 NOMBRE_ARTICLES = 5
 PAUSE_NOMINATIM = 1.1
+SEUIL_SCORE = 2
+TOP_CANDIDATS = 40
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")

@@ -4,7 +4,7 @@ import logging
 from datetime import date
 
 from . import fetch_archive, geocode, llm
-from .config import JOURS_FR, MOIS_FR, NOMBRE_ARTICLES
+from .config import JOURS_FR, MOIS_FR, NOMBRE_ARTICLES, SEUIL_SCORE, TOP_CANDIDATS
 
 log = logging.getLogger(__name__)
 
@@ -16,9 +16,11 @@ def _normaliser_article(item: dict, articles: list[dict]) -> dict | None:
     article = articles[idx]
     titre = article["titre"]
     lieu = (item.get("lieu") or "").strip()
-    type_lieu = (item.get("type") or "").strip().replace("région", "region")
+    type_lieu = (item.get("type") or "").strip().lower().replace("é", "e")
 
-    if not lieu or type_lieu not in ("ville", "departement", "region"):
+    if not lieu or type_lieu != "ville":
+        return None
+    if geocode._norm(lieu) in geocode.NOMS_NAMES and geocode._norm(lieu) != "paris":
         return None
     base, est_gentile = geocode.nettoyer_lieu(lieu, type_lieu)
     tronque = geocode.generer_titre_tronque(titre, lieu, base if est_gentile else None)
@@ -40,41 +42,59 @@ def _nommer_jour(jour: date) -> str:
 
 
 def _recherche_complete(candidats: list[dict], jour: date) -> list[dict]:
-    """Sélectionne les 5 meilleurs articles (LLM) avec validation géocodage."""
-    retenus: list[dict] = []
-    exclus: set[int] = set()
-    lieux_deja: set[str] = set()
+    """Scoring LLM puis sélection déterministe : géocodage + diversité."""
+    try:
+        scores = llm.noter_articles(candidats, _nommer_jour(jour))
+    except llm.SelectionIndisponible as erreur:
+        log.warning("Scoring LLM impossible : %s", erreur)
+        return []
 
-    for _ in range(6):
-        if len(retenus) >= NOMBRE_ARTICLES:
+    ordres = sorted(scores.items(), key=lambda paire: paire[1], reverse=True)
+    top = [idx for idx, score in ordres if score >= SEUIL_SCORE][:TOP_CANDIDATS]
+    if not top:
+        log.warning("Aucun article au-dessus du seuil %d", SEUIL_SCORE)
+        return []
+
+    extraits: dict[int, dict] = {}
+    a_traiter = list(top)
+    for _ in range(3):
+        if not a_traiter:
             break
         try:
-            proposition = llm.appeler_llm(candidats, _nommer_jour(jour), exclus)
+            extraits.update(llm.extraire_lieux(candidats, _nommer_jour(jour), a_traiter))
         except llm.SelectionIndisponible as erreur:
-            log.warning("Sélection LLM impossible : %s", erreur)
+            log.warning("Extraction LLM impossible : %s", erreur)
             break
+        a_traiter = [idx for idx in a_traiter if idx not in extraits]
+    if not extraits:
+        return []
 
-        for item in proposition:
-            if len(retenus) >= NOMBRE_ARTICLES:
-                break
-            if item["id"] in exclus:
-                continue
-            exclus.add(item["id"])
-            normalise = _normaliser_article(item, candidats)
-            if normalise is None:
-                continue
-            cle = geocode._norm(normalise["lieu"])
-            if cle in lieux_deja:
-                continue
-            if normalise["type"] == "region":
-                coordonnees = geocode.coordonnees_region(normalise["lieu"])
-            else:
-                coordonnees = geocode.geocoder(normalise["lieu"])
-            if coordonnees is None:
-                continue
-            normalise["latitude"], normalise["longitude"] = coordonnees
-            lieux_deja.add(cle)
-            retenus.append(normalise)
+    retenus: list[dict] = []
+    lieux_deja: set[str] = set()
+    sujets_deja: set[str] = set()
+    for idx in top:
+        if len(retenus) >= NOMBRE_ARTICLES:
+            break
+        item = extraits.get(idx)
+        if item is None:
+            continue
+        sujet = geocode._norm(item.get("sujet", ""))
+        if sujet and sujet in sujets_deja:
+            continue
+        normalise = _normaliser_article({"id": idx, **item}, candidats)
+        if normalise is None:
+            continue
+        cle = geocode._norm(normalise["lieu"])
+        if cle in lieux_deja:
+            continue
+        coordonnees = geocode.geocoder(normalise["lieu"])
+        if coordonnees is None:
+            continue
+        normalise["latitude"], normalise["longitude"] = coordonnees
+        lieux_deja.add(cle)
+        if sujet:
+            sujets_deja.add(sujet)
+        retenus.append(normalise)
 
     return retenus
 

@@ -1,5 +1,5 @@
 :root {
-  --ici-blue: #001bcc;
+  --ici-blue: #3255ff;
   --ink: #161719;
   --muted: #686b70;
   --paper: #f7f7f4;
@@ -31,30 +31,29 @@ body {
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  min-height: 64px;
+  justify-content: center;
+  padding: 28px 0;
   border-bottom: 1px solid var(--line);
 }
 
 .ici-brand {
   display: block;
   line-height: 0;
+  width: min(100%, 300px);
 }
 
 .ici-brand img {
   display: block;
-  width: 82px;
+  width: 100%;
   height: auto;
 }
 
-.header-context, .eyebrow, .question-label, .progression {
+.eyebrow, .question-label, .progression {
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.075em;
   text-transform: uppercase;
 }
-
-.header-context { color: var(--muted); }
 
 .game {
   display: flex;
@@ -115,11 +114,39 @@ h1 { font-size: clamp(2.5rem, 9vw, 4.5rem); line-height: 0.94; }
 .article-link a {
   color: var(--ici-blue);
   text-decoration: none;
-  border-bottom: 1px solid rgba(0, 27, 204, 0.35);
+  border-bottom: 1px solid rgba(50, 85, 255, 0.35);
   padding-bottom: 1px;
   transition: border-color 150ms ease;
 }
 .article-link a:hover { border-color: var(--ici-blue); }
+
+.hint-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  min-height: 44px;
+  margin: 0 0 10px;
+}
+#hint-button {
+  padding: 8px 14px;
+  border: 1px solid var(--ici-blue);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ici-blue);
+  font: 700 0.8rem Arial, Helvetica, sans-serif;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+#hint-button:hover:not(:disabled) { background: #eef1ff; }
+#hint-button:disabled { opacity: 0.5; cursor: default; }
+#hint-display {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+#hint-display:empty { display: none; }
 
 #feedback {
   min-height: 44px;
@@ -132,7 +159,7 @@ h1 { font-size: clamp(2.5rem, 9vw, 4.5rem); line-height: 0.94; }
 #feedback strong { color: var(--ink); }
 
 #next-button {
-  align-self: flex-end;
+  align-self: flex-start;
   min-height: 46px;
   margin: 4px 0 14px;
   padding: 0 20px;
@@ -255,13 +282,14 @@ h1 { font-size: clamp(2.5rem, 9vw, 4.5rem); line-height: 0.94; }
 }
 .recap-num { color: var(--ici-blue); font: 700 0.7rem Arial, Helvetica, sans-serif; letter-spacing: 0.05em; }
 .recap-title { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 0.95rem; font-weight: 700; line-height: 1.4; }
+.recap-score { margin: 4px 0 0; color: var(--muted); font-size: 0.78rem; }
 .recap-link {
   align-self: center;
   color: var(--ici-blue);
   font-size: 0.75rem;
   font-weight: 700;
   text-decoration: none;
-  border-bottom: 1px solid rgba(0, 27, 204, 0.35);
+  border-bottom: 1px solid rgba(50, 85, 255, 0.35);
   padding-bottom: 1px;
   white-space: nowrap;
 }
@@ -321,6 +349,15 @@ h1 { font-size: clamp(2.5rem, 9vw, 4.5rem); line-height: 0.94; }
   cursor: pointer;
 }
 
+@media (min-width: 641px) {
+  #share-overlay { align-items: center; }
+  .share-sheet {
+    padding: 18px 22px 20px;
+    border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  }
+}
+
 #toast {
   position: fixed;
   left: 50%;
@@ -341,7 +378,6 @@ h1 { font-size: clamp(2.5rem, 9vw, 4.5rem); line-height: 0.94; }
 
 .home-main { max-width: 720px; margin: 0 auto; padding: clamp(60px, 13vh, 120px) 0 40px; }
 .home-hero { text-align: center; }
-.home-hero h1 { font-size: clamp(4.3rem, 20vw, 8.5rem); padding-bottom: 20px}
 .home-intro { max-width: 430px; margin: 34px auto 0; font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.2rem, 4.8vw, 1.55rem); line-height: 1.3; }
 .home-intro a:visited, a:active { color: inherit; text-decoration: none; }
 .home-play { display: inline-flex; align-items: center; gap: 22px; min-height: 54px; margin-top: 30px; padding: 0 20px; background: var(--ici-blue); color: #fff; font-size: 0.95rem; font-weight: 700; text-decoration: none; }
@@ -375,7 +411,6 @@ h1 { font-size: clamp(2.5rem, 9vw, 4.5rem); line-height: 0.94; }
   .question-card { padding: 18px 0 22px; }
   #feedback { font-size: 1rem; }
   #map-container { height: min(60vh, 600px); }
-  .home-hero h1 { font-size: 8.5rem; }
   .how-to ol { grid-template-columns: repeat(3, 1fr); gap: 24px; }
   .how-to li { grid-template-columns: 1fr; gap: 8px; min-height: 120px; }
 }
@@ -393,7 +428,7 @@ h1 { font-size: clamp(2.5rem, 9vw, 4.5rem); line-height: 0.94; }
   background: var(--ici-blue);
   color: #fff;
   border-radius: 3px;
-  box-shadow: 0 12px 26px rgba(0, 27, 204, 0.22);
+  box-shadow: 0 12px 26px rgba(50, 85, 255, 0.22);
   text-decoration: none;
 }
 .today-card .eyebrow { margin-bottom: 0; color: rgba(255, 255, 255, 0.72); }
@@ -462,8 +497,10 @@ h1 { font-size: clamp(2.5rem, 9vw, 4.5rem); line-height: 0.94; }
 .game-empty { color: var(--muted); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
 
 @media (max-width: 640px) {
+  .header { padding: 14px 0; }
   .home-main { padding-top: clamp(28px, 6vh, 60px); padding-bottom: 24px; }
   .how-to { margin-top: clamp(44px, 8vh, 74px); }
+  .archives { padding-top: clamp(8px, 2vh, 20px); }
   .today-card { flex-direction: column; align-items: flex-start; padding: 22px 20px; }
   .game-link, .game--empty { padding: 16px 6px; }
   .game-go { display: none; }

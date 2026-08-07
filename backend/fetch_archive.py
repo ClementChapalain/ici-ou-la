@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import html
+import json
 import re
 from datetime import date
+from pathlib import Path
 
 import requests
 
-from .config import BASE_URL, USER_AGENT
+from .config import BASE_URL, CACHE_ARCHIVES, USER_AGENT
 
 REGLE_SECTION = re.compile(r'<ul id="DayArchivesSection".*?</ul>', re.S)
 REGLE_LIEN = re.compile(r'<a[^>]*href="([^"]+)"[^>]*>(.*?)</a>', re.S)
@@ -58,7 +60,18 @@ def _articles_depuis_html(texte: str) -> list[tuple[str, str]]:
     return resultats
 
 
+def _chemin_cache(jour: date) -> Path:
+    return CACHE_ARCHIVES / f"{jour.isoformat()}.json"
+
+
 def articles_du_jour(jour: date, limite: int = 400) -> list[dict]:
+    chemin = _chemin_cache(jour)
+    if chemin.exists():
+        articles = json.loads(chemin.read_text(encoding="utf-8"))
+        if len(articles) <= limite:
+            return articles
+        return articles[:limite]
+
     session = _session()
     vus: dict[str, dict] = {}
     page = 1
@@ -84,4 +97,6 @@ def articles_du_jour(jour: date, limite: int = 400) -> list[dict]:
     articles = list(vus.values())
     if len(articles) > limite:
         articles = articles[:limite]
+    CACHE_ARCHIVES.mkdir(parents=True, exist_ok=True)
+    chemin.write_text(json.dumps(articles, ensure_ascii=False, indent=1), encoding="utf-8")
     return articles

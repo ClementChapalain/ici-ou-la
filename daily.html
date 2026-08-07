@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ICI ou là - daily</title>
-  <link rel="icon" href="favicon.ico">
+  <link rel="icon" href="favicon.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -17,22 +17,15 @@
   <div class="page">
 
     <header class="header">
-      <a class="ici-brand" href="index.html" aria-label="ICI, accueil">
-        <img src="https://www.ici.fr/client/immutable/assets/logo-ici-small.DwiLDMIK.svg" alt="ici">
+      <a class="ici-brand" href="index.html" aria-label="ICI ou là, accueil">
+        <img src="logo.svg" alt="ICI ou là">
       </a>
-      <span class="header-context">Le média de la vie locale</span>
     </header>
 
     <main class="game">
 
-      <div class="game-heading">
-        <p class="eyebrow">5 articles, 5 lieux à retrouver</p>
-        <h1>ICI ou là</h1>
-      </div>
-
       <div class="game-meta">
         <div class="progression">Article <span id="numero"></span><span aria-hidden="true"> / 5</span></div>
-        <span class="instruction">Placez votre repère sur la carte</span>
       </div>
 
       <section class="question-card" aria-label="Question en cours">
@@ -40,9 +33,6 @@
         <p class="article-link"></p>
       </section>
       <div id="feedback" aria-live="polite"></div>
-      <button id="next-button" style="display:none;">
-        Article suivant
-      </button>
 
       <div id="end-screen" style="display:none;">
         <p class="eyebrow">Partie terminée</p>
@@ -55,6 +45,14 @@
         </div>
         <ol class="recap" id="recap"></ol>
       </div>
+
+      <div class="hint-bar">
+        <button id="hint-button" type="button">💡 Indice</button>
+        <p id="hint-display" aria-live="polite"></p>
+      </div>
+      <button id="next-button" style="display:none;">
+        Article suivant
+      </button>
 
       <div id="map-container" aria-label="Carte de France : cliquez à l'endroit où vous situez le lieu"></div>
 

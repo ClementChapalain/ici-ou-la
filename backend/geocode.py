@@ -230,16 +230,45 @@ def nettoyer_lieu(lieu: str, type_lieu: str) -> tuple[str, bool]:
     return lieu, False
 
 
+def _premier_mot(lieu: str) -> str | None:
+    for separateur in (" ", "-"):
+        if separateur in lieu:
+            mot = lieu.split(separateur, 1)[0]
+            return mot if len(mot) >= 4 else None
+    return None
+
+
 def generer_titre_tronque(titre: str, lieu: str, base: str | None = None) -> str | None:
-    cible = lieu
-    spans = spans_accent_insensibles(titre, cible)
+    aiguilles = [lieu]
+    if base and base != lieu:
+        aiguilles.append(base)
+    premier = _premier_mot(lieu)
+    if premier and premier != lieu:
+        aiguilles.append(premier)
+
+    spans = set()
+    for aiguille in aiguilles:
+        for debut, fin in spans_accent_insensibles(titre, aiguille):
+            spans.add((debut, fin))
     if not spans:
-        if base and base != lieu:
-            spans = spans_accent_insensibles(titre, base)
-        if not spans:
-            return None
-    debut, fin = spans[0]
-    return titre[:debut] + "_____" + titre[fin:]
+        return None
+
+    ordres = sorted(spans)
+    fusionnes = []
+    for debut, fin in ordres:
+        if fusionnes and debut < fusionnes[-1][1]:
+            fusionnes[-1] = (fusionnes[-1][0], max(fusionnes[-1][1], fin))
+        else:
+            fusionnes.append((debut, fin))
+
+    pieces = []
+    precedent = 0
+    for debut, fin in fusionnes:
+        pieces.append(titre[precedent:debut])
+        pieces.append("_____")
+        precedent = fin
+    pieces.append(titre[precedent:])
+    return "".join(pieces)
 
 
 _cache: dict | None = None
