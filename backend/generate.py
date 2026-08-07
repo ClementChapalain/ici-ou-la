@@ -117,7 +117,7 @@ def generer_archives(parties: list[dict]) -> None:
 <body class="home">
   <div class="page">
     <header class="header">
-      <a class="ici-brand" href="ici ou là.html" aria-label="ICI, accueil">
+      <a class="ici-brand" href="index.html" aria-label="ICI, accueil">
         <img src="https://www.ici.fr/client/immutable/assets/logo-ici-small.DwiLDMIK.svg" alt="ici">
       </a>
       <span class="header-context">Le média de la vie locale</span>

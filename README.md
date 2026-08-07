@@ -19,7 +19,6 @@ Le front est un site statique (HTML + JS, Leaflet, Papa Parse). Le backend, en P
 
 ```
 index.html            Accueil
-ici ou là.html        Accueil (nom d'origine, lié par daily/archives)
 daily.html            Partie du jour (Leaflet)
 archives.html         Les 30 dernières parties (généré)
 script_game.js        Logique du jeu
