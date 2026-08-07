@@ -261,11 +261,25 @@ function finPartie() {
   document.querySelector("#end-screen").style.display = "block";
   document.querySelector("#final-score").textContent = score.toLocaleString("fr-FR");
   document.querySelector("#share-button").onclick = ouvrirPartage;
+  marquerPartieJouee();
 
   const palier = messageSelonScore(score);
   document.querySelector("#end-title").textContent = palier.titre;
   document.querySelector("#end-message").textContent = palier.message;
   afficherRecap();
+}
+
+function marquerPartieJouee() {
+  const [jour, mois, annee] = partieActuelle.date.split("/");
+  const iso = `${annee}-${mois}-${jour}`;
+  const CLEF_PARTIES_JOUÉES = "icioulà-parties-jouées";
+  try {
+    const jouees = JSON.parse(localStorage.getItem(CLEF_PARTIES_JOUÉES) || "[]");
+    if (!jouees.includes(iso)) {
+      jouees.push(iso);
+      localStorage.setItem(CLEF_PARTIES_JOUÉES, JSON.stringify(jouees));
+    }
+  } catch (erreur) {}
 }
 
 function echapperHTML(texte) {
