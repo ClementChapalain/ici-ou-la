@@ -13,7 +13,7 @@ BACKEND_DIR = Path(__file__).resolve().parent
 load_dotenv(BACKEND_DIR / ".env")
 load_dotenv(PROJECT_ROOT / ".env")
 
-CSV_PARTIES = PROJECT_ROOT / "articles3.csv"
+CSV_PARTIES = PROJECT_ROOT / "articles.csv"
 ARCHIVES_HTML = PROJECT_ROOT / "archives.html"
 CACHE_GEOCODAGE = BACKEND_DIR / "geocode_cache.json"
 

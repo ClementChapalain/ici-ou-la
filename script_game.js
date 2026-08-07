@@ -16,7 +16,7 @@ const cacheLieux = new Map();
 
 initialiserCarte();
 
-Papa.parse("articles3.csv", {
+Papa.parse("articles.csv", {
   download: true,
   header: true,
   skipEmptyLines: true,
