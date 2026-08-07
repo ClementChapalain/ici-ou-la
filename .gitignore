@@ -1,0 +1,4 @@
+__pycache__/
+backend/.env
+backend/.venv/
+.DS_Store

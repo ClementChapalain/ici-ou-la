@@ -1,0 +1,55 @@
+name: Generer la partie du jour
+
+on:
+  schedule:
+    # 22h35 UTC ~ 00h35 à Paris (heure d'été). La date "hier" est calculée en
+    # Europe/Paris dans le script, donc l'heure de déclenchement reste indicative.
+    - cron: "35 22 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+  pages: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Installer les dépendances
+        run: pip install -r backend/requirements.txt
+
+      - name: Générer la partie
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python -m backend.run
+
+      - name: Commiter les fichiers générés
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add articles3.csv archives.html backend/geocode_cache.json
+          if git diff --cached --quiet; then
+            echo "Rien de nouveau"
+          else
+            git commit -m "Partie du jour : $(date +%d/%m/%Y)"
+            git push
+          fi
+
+      - name: Configurer GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Préparer l'artefact du site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "."
+          exclude: ".git/*,backend/*,.github/*,old/*"
+
+      - name: Déployer sur GitHub Pages
+        uses: actions/deploy-pages@v4
