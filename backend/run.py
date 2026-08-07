@@ -6,7 +6,7 @@ import sys
 from datetime import date, timedelta
 
 from . import generate, pipeline
-from .config import date_hier
+from .config import date_hier, parser_date_csv
 
 log = logging.getLogger("backend")
 
@@ -25,6 +25,8 @@ def construire_argumentaire() -> argparse.ArgumentParser:
                            help="Fin de la plage de dates (ISO)")
     analyseur.add_argument("--dry-run", action="store_true",
                            help="Calcule et affiche la sélection sans écrire de fichiers")
+    analyseur.add_argument("--force", action="store_true",
+                           help="Régénère même si la date existe déjà dans le CSV")
     analyseur.add_argument("--verbose", action="store_true", help="Logs détaillés")
     return analyseur
 
@@ -55,8 +57,15 @@ def principal() -> int:
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO,
                         format="%(levelname)s %(name)s: %(message)s")
 
+    dates_existantes = {d for d in (parser_date_csv(l.get("Date", "")) for l in generate.charger_parties()) if d}
+
     parties = []
+    ignorees = 0
     for jour in _journees(args):
+        if jour in dates_existantes and not args.force:
+            ignorees += 1
+            log.info("%s déjà dans le CSV, génération ignorée (--force pour régénérer)", jour)
+            continue
         partie = pipeline.construire_partie(jour)
         if partie:
             parties.append(partie)
@@ -64,6 +73,9 @@ def principal() -> int:
                 _afficher_partie(partie)
 
     if not parties:
+        if ignorees:
+            log.info("Rien à faire : toutes les dates demandées sont déjà dans le CSV.")
+            return 0
         log.warning("Aucune partie générée.")
         return 1
 
